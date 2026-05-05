@@ -1,0 +1,25 @@
+{
+"type": "FeatureCollection",
+"name": "Zoos",
+"features": [
+{ "type": "Feature", "properties": { "Name": "Berlin Zoo", "description": "The Berlin Zoo hosts the oldest panda.", "image_url": "https://www.zoo-berlin.de/fileadmin/user_upload/Header_Pandagarden.jpg", "source_text": "Zoo Berlin", "source_url": "https://www.zoo-berlin.de/en/animals/panda-garden", "filter": "current" }, "geometry": { "type": "Point", "coordinates": [ 13.3463965, 52.5132622, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "ZooParc de Beauval", "description": "This is another zoo.", "image_url": "https://cdn-images.zoobeauval.com/YtejtULyRFVxqrrTGTEYM22WZ7Q=/2400x1425/https%3A%2F%2Fs3.eu-west-3.amazonaws.com%2Fimages.zoobeauval.com%2F2020%2F06%2Fparrainage-1-5ee0ed7869fbf.jpg", "source_text": "ZooParc de Beauval", "source_url": "https://www.zoobeauval.com/en/zooparc/animals/giant-panda", "filter": "current" }, "geometry": { "type": "Point", "coordinates": [ 1.35309, 47.2476534, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "Pairi Diaza", "description": null, "image_url": null, "source_text": null, "source_url": null, "filter": null }, "geometry": { "type": "Point", "coordinates": [ 3.8873876, 50.5850028, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "Edinburgh Zoo", "description": null, "image_url": null, "source_text": null, "source_url": null, "filter": null }, "geometry": { "type": "Point", "coordinates": [ -3.2685447, 55.9423744, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "Tiergarten Schönbrunn", "description": null, "image_url": null, "source_text": null, "source_url": null, "filter": null }, "geometry": { "type": "Point", "coordinates": [ 16.3028435, 48.1820666, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "Ähtäri Zoo", "description": null, "image_url": null, "source_text": null, "source_url": null, "filter": null }, "geometry": { "type": "Point", "coordinates": [ 24.1850654, 62.5363251, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "Zoo Aquarium", "description": null, "image_url": null, "source_text": null, "source_url": null, "filter": null }, "geometry": { "type": "Point", "coordinates": [ -3.7608442, 40.409189, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "Copenhagen Zoo", "description": null, "image_url": null, "source_text": null, "source_url": null, "filter": null }, "geometry": { "type": "Point", "coordinates": [ 12.5234459, 55.6716899, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "Ouwehands Dierenpark", "description": null, "image_url": null, "source_text": null, "source_url": null, "filter": null }, "geometry": { "type": "Point", "coordinates": [ 5.5909509, 51.9556998, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "Moscow Zoo", "description": null, "image_url": null, "source_text": null, "source_url": null, "filter": null }, "geometry": { "type": "Point", "coordinates": [ 37.5766016, 55.7631648, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "Adelaide Zoo", "description": null, "image_url": null, "source_text": null, "source_url": null, "filter": null }, "geometry": { "type": "Point", "coordinates": [ 138.606471, -34.9147027, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "Everland", "description": null, "image_url": null, "source_text": null, "source_url": null, "filter": null }, "geometry": { "type": "Point", "coordinates": [ 127.2028654, 37.2929093, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "Ueno Zoo", "description": null, "image_url": null, "source_text": null, "source_url": null, "filter": null }, "geometry": { "type": "Point", "coordinates": [ 139.7729492, 35.7159369, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "Zoo Negara", "description": null, "image_url": null, "source_text": null, "source_url": null, "filter": null }, "geometry": { "type": "Point", "coordinates": [ 101.758779, 3.2101774, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "Zoo Atlanta", "description": null, "image_url": null, "source_text": null, "source_url": null, "filter": null }, "geometry": { "type": "Point", "coordinates": [ -84.3716518, 33.7337275, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "Memphis Zoo", "description": null, "image_url": null, "source_text": null, "source_url": null, "filter": null }, "geometry": { "type": "Point", "coordinates": [ -89.9943446, 35.149959, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "Smithsonian Zoo", "description": null, "image_url": null, "source_text": null, "source_url": null, "filter": null }, "geometry": { "type": "Point", "coordinates": [ -77.0495628, 38.9295356, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "San Diego Zoo", "description": null, "image_url": null, "source_text": null, "source_url": null, "filter": null }, "geometry": { "type": "Point", "coordinates": [ -117.150968, 32.7359996, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "Zoológico de Chapultepec", "description": null, "image_url": null, "source_text": null, "source_url": null, "filter": null }, "geometry": { "type": "Point", "coordinates": [ -99.1894399, 19.4231966, 0.0 ] } }
+]
+}
