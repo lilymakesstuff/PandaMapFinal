@@ -21,11 +21,11 @@
         .gantt-svg { width: 100%; border: 1px solid #ddd; }
         .gantt-bar { cursor: pointer; }
         .gantt-bar:hover { opacity: 0.8; }
-        .gantt-bar-deceased { fill: #B42222; }
-        .gantt-bar-living { fill: #3a7d2e; }
+        .gantt-bar-male { fill: #4A90E2; }
+        .gantt-bar-female { fill: #FF6B9D; }
         .gantt-axis-label { font-size: 12px; fill: #333; }
         .gantt-label { font-size: 12px; fill: #333; font-weight: 500; }
-        .gantt-tooltip { position: absolute; background: rgba(0, 0, 0, 0.8); color: white; padding: 8px 12px; border-radius: 4px; font-size: 12px; pointer-events: none; white-space: nowrap; }
+        .gantt-tooltip { position: absolute; background: rgba(0, 0, 0, 0.8); color: white; padding: 8px 12px; border-radius: 4px; font-size: 12px; pointer-events: none; white-space: nowrap; z-index: 10000; }
         .no-pandas { color: #999; font-style: italic; text-align: center; padding: 20px; }
     </style>
 </head>
@@ -41,8 +41,15 @@
     </div>
 </div>
 <script>
-// Pandas data embedded
-const pandasData = [{'panda_id': 4, 'name': 'Bao Bao', 'gender': 'm', 'birth_year': 1978, 'death_year': 2012, 'loan_zoo': 'Berlin Zoo'}, {'panda_id': 5, 'name': 'Tjen Tjen', 'gender': 'f', 'birth_year': 1980, 'death_year': 1984, 'loan_zoo': 'Berlin Zoo'}, {'panda_id': 7, 'name': 'Yan Yan', 'gender': 'f', 'birth_year': 1985, 'death_year': 2007, 'loan_zoo': 'Berlin Zoo'}, {'panda_id': 20, 'name': 'Jiao Qing', 'gender': 'm', 'birth_year': 2010, 'death_year': '', 'loan_zoo': 'Berlin Zoo'}, {'panda_id': 24, 'name': 'Meng Meng', 'gender': 'f', 'birth_year': 2013, 'death_year': '', 'loan_zoo': 'Berlin Zoo'}, {'panda_id': 39, 'name': 'Pit', 'gender': 'm', 'birth_year': 2019, 'death_year': '', 'loan_zoo': 'Berlin Zoo'}, {'panda_id': 40, 'name': 'Paule', 'gender': 'm', 'birth_year': 2019, 'death_year': '', 'loan_zoo': 'Berlin Zoo'}];
+// Load pandas data from file
+let pandasData = [];
+
+fetch('PandasData.json')
+    .then(response => response.json())
+    .then(data => {
+        pandasData = data;
+    })
+    .catch(error => console.error('Error loading pandas data:', error));
 
 // Modal functions
 function openPandasModal(zooName) {
@@ -122,7 +129,7 @@ function renderGanttChart(data) {
         .enter()
         .append('rect')
         .attr('class', 'gantt-bar')
-        .attr('class', d => `gantt-bar ${d.death_year ? 'gantt-bar-deceased' : 'gantt-bar-living'}`)
+        .attr('class', d => `gantt-bar ${d.gender === 'm' ? 'gantt-bar-male' : 'gantt-bar-female'}`)
         .attr('x', d => xScale(d.birth_year))
         .attr('y', d => yScale(d.name))
         .attr('width', d => {
@@ -135,19 +142,46 @@ function renderGanttChart(data) {
             const tooltip = document.createElement('div');
             tooltip.className = 'gantt-tooltip';
             const endYear = d.death_year ? parseInt(d.death_year) : currentYear;
+            const gender = d.gender === 'm' ? 'Male' : 'Female';
             const status = d.death_year ? `Died ${d.death_year}` : 'Living';
-            tooltip.textContent = `${d.name}: ${d.birth_year} - ${endYear} (${status})`;
+            tooltip.textContent = `${d.name}: ${d.birth_year} - ${endYear} (${gender}, ${status})`;
             document.body.appendChild(tooltip);
             
-            const rect = this.getBoundingClientRect();
-            tooltip.style.left = (rect.left + rect.width / 2 - tooltip.offsetWidth / 2) + 'px';
-            tooltip.style.top = (rect.top - tooltip.offsetHeight - 5) + 'px';
+            // Position tooltip relative to mouse
+            tooltip.style.left = (event.pageX + 10) + 'px';
+            tooltip.style.top = (event.pageY - 10) + 'px';
             
             d3.select(this).attr('opacity', 0.7);
         })
         .on('mouseout', function() {
             document.querySelectorAll('.gantt-tooltip').forEach(el => el.remove());
             d3.select(this).attr('opacity', 1);
+        });
+    
+    // Birth dots for pandas born in host zoo
+    g.selectAll('.birth-dot')
+        .data(data.filter(d => d.born_china_true === 0))
+        .enter()
+        .append('circle')
+        .attr('class', 'birth-dot')
+        .attr('cx', d => xScale(d.birth_year))
+        .attr('cy', d => yScale(d.name) + yScale.bandwidth() / 2)
+        .attr('r', 4)
+        .attr('fill', '#FFD700')
+        .attr('stroke', '#000')
+        .attr('stroke-width', 1)
+        .on('mouseover', function(event, d) {
+            const tooltip = document.createElement('div');
+            tooltip.className = 'gantt-tooltip';
+            tooltip.textContent = 'Born in host zoo';
+            document.body.appendChild(tooltip);
+            
+            // Position tooltip relative to mouse
+            tooltip.style.left = (event.pageX + 10) + 'px';
+            tooltip.style.top = (event.pageY - 10) + 'px';
+        })
+        .on('mouseout', function() {
+            document.querySelectorAll('.gantt-tooltip').forEach(el => el.remove());
         });
 }
 
