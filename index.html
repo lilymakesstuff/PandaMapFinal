@@ -43,13 +43,35 @@
 <script>
 // Load pandas data from file
 let pandasData = [];
+let zooData = null;
 
 fetch('PandasData.json')
     .then(response => response.json())
     .then(data => {
         pandasData = data;
+        
+        // If map is already loaded, filter zoos immediately
+        if (zooData && map.loaded()) {
+            filterZoos();
+        }
     })
     .catch(error => console.error('Error loading pandas data:', error));
+
+function filterZoos() {
+    if (!pandasData.length || !zooData) return;
+    
+    // Filter zoos to only show those with pandas
+    const zoosWithPandas = new Set(pandasData.map(p => p.loan_zoo));
+    const filteredZooData = {
+        ...zooData,
+        features: zooData.features.filter(feature => zoosWithPandas.has(feature.properties.Name))
+    };
+    
+    // Update the map source with filtered data
+    if (map.getSource('zoos')) {
+        map.getSource('zoos').setData(filteredZooData);
+    }
+}
 
 // Modal functions
 function openPandasModal(zooName) {
@@ -203,7 +225,7 @@ const map = new mapboxgl.Map({
 });
 
 map.on('load', () => {
-    const zooData = {
+    zooData = {
 "type": "FeatureCollection",
 "name": "Zoos",
 "features": [
@@ -241,6 +263,9 @@ map.on('load', () => {
             'circle-color': '#B42222'
         }
     });
+
+    // Try to filter zoos if pandas data is already loaded
+    filterZoos();
 
     // Add click handler for D3 pandas modal
     map.on('click', 'zoos-layer', (e) => {
