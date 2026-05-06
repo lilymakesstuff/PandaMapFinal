@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8' />
+    <title>Zoos Map</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
+    <script src='https://d3js.org/d3.v7.min.js'></script>
+    <style>
+        body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 1000; }
+        .modal-overlay.active { display: flex; align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 30px; border-radius: 8px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-header h2 { margin: 0; color: #B42222; }
+        .close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #999; }
+        .close-btn:hover { color: #333; }
+        .gantt-container { margin-top: 20px; }
+        .gantt-svg { width: 100%; border: 1px solid #ddd; }
+        .gantt-bar { cursor: pointer; }
+        .gantt-bar:hover { opacity: 0.8; }
+        .gantt-bar-deceased { fill: #B42222; }
+        .gantt-bar-living { fill: #3a7d2e; }
+        .gantt-axis-label { font-size: 12px; fill: #333; }
+        .gantt-label { font-size: 12px; fill: #333; font-weight: 500; }
+        .gantt-tooltip { position: absolute; background: rgba(0, 0, 0, 0.8); color: white; padding: 8px 12px; border-radius: 4px; font-size: 12px; pointer-events: none; white-space: nowrap; }
+        .no-pandas { color: #999; font-style: italic; text-align: center; padding: 20px; }
+    </style>
+</head>
+<body>
+<div id='map'></div>
+<div class='modal-overlay' id='pandasModal'>
+    <div class='modal-content'>
+        <div class='modal-header'>
+            <h2 id='zooName'></h2>
+            <button class='close-btn' id='closeModal'>&times;</button>
+        </div>
+        <div id='pandasContainer'></div>
+    </div>
+</div>
+<script>
+// Pandas data embedded
+const pandasData = [{'panda_id': 4, 'name': 'Bao Bao', 'gender': 'm', 'birth_year': 1978, 'death_year': 2012, 'loan_zoo': 'Berlin Zoo'}, {'panda_id': 5, 'name': 'Tjen Tjen', 'gender': 'f', 'birth_year': 1980, 'death_year': 1984, 'loan_zoo': 'Berlin Zoo'}, {'panda_id': 7, 'name': 'Yan Yan', 'gender': 'f', 'birth_year': 1985, 'death_year': 2007, 'loan_zoo': 'Berlin Zoo'}, {'panda_id': 20, 'name': 'Jiao Qing', 'gender': 'm', 'birth_year': 2010, 'death_year': '', 'loan_zoo': 'Berlin Zoo'}, {'panda_id': 24, 'name': 'Meng Meng', 'gender': 'f', 'birth_year': 2013, 'death_year': '', 'loan_zoo': 'Berlin Zoo'}, {'panda_id': 39, 'name': 'Pit', 'gender': 'm', 'birth_year': 2019, 'death_year': '', 'loan_zoo': 'Berlin Zoo'}, {'panda_id': 40, 'name': 'Paule', 'gender': 'm', 'birth_year': 2019, 'death_year': '', 'loan_zoo': 'Berlin Zoo'}];
+
+// Modal functions
+function openPandasModal(zooName) {
+    const filteredPandas = pandasData.filter(p => p.loan_zoo === zooName);
+    const modal = document.getElementById('pandasModal');
+    const zooNameEl = document.getElementById('zooName');
+    const pandasContainer = document.getElementById('pandasContainer');
+    
+    zooNameEl.textContent = zooName;
+    
+    if (filteredPandas.length === 0) {
+        pandasContainer.innerHTML = '<div class="no-pandas">No pandas found for this zoo</div>';
+    } else {
+        pandasContainer.innerHTML = '';
+        renderGanttChart(filteredPandas);
+    }
+    
+    modal.classList.add('active');
+}
+
+function renderGanttChart(data) {
+    const margin = { top: 10, right: 30, bottom: 30, left: 120 };
+    const width = 450 - margin.left - margin.right;
+    const height = data.length * 35 + 20;
+    const currentYear = new Date().getFullYear();
+    
+    // Find min and max years
+    let minYear = Math.min(...data.map(d => d.birth_year));
+    let maxYear = Math.max(...data.map(d => d.death_year ? parseInt(d.death_year) : currentYear));
+    
+    const svg = d3.select('#pandasContainer')
+        .append('svg')
+        .attr('class', 'gantt-svg')
+        .attr('width', width + margin.left + margin.right)
+        .attr('height', height + margin.top + margin.bottom);
+    
+    const g = svg.append('g')
+        .attr('transform', `translate(${margin.left},${margin.top})`);
+    
+    // Scales
+    const xScale = d3.scaleLinear()
+        .domain([minYear - 1, maxYear + 1])
+        .range([0, width]);
+    
+    const yScale = d3.scaleBand()
+        .domain(data.map(d => d.name))
+        .range([0, height - margin.bottom])
+        .padding(0.4);
+    
+    // X-axis
+    g.append('g')
+        .attr('transform', `translate(0,${height - margin.bottom})`)
+        .call(d3.axisBottom(xScale).tickFormat(d3.format('d')))
+        .append('text')
+        .attr('class', 'gantt-axis-label')
+        .attr('x', width / 2)
+        .attr('y', 25)
+        .attr('fill', '#333')
+        .text('Year');
+    
+    // Y-axis (labels)
+    g.append('g')
+        .selectAll('text')
+        .data(data)
+        .enter()
+        .append('text')
+        .attr('class', 'gantt-label')
+        .attr('x', -10)
+        .attr('y', d => yScale(d.name) + yScale.bandwidth() / 2)
+        .attr('text-anchor', 'end')
+        .attr('dominant-baseline', 'middle')
+        .text(d => `${d.name} ${d.gender === 'm' ? '♂' : '♀'}`);
+    
+    // Gantt bars
+    g.selectAll('.gantt-bar')
+        .data(data)
+        .enter()
+        .append('rect')
+        .attr('class', 'gantt-bar')
+        .attr('class', d => `gantt-bar ${d.death_year ? 'gantt-bar-deceased' : 'gantt-bar-living'}`)
+        .attr('x', d => xScale(d.birth_year))
+        .attr('y', d => yScale(d.name))
+        .attr('width', d => {
+            const endYear = d.death_year ? parseInt(d.death_year) : currentYear;
+            return xScale(endYear) - xScale(d.birth_year);
+        })
+        .attr('height', yScale.bandwidth())
+        .attr('rx', 3)
+        .on('mouseover', function(event, d) {
+            const tooltip = document.createElement('div');
+            tooltip.className = 'gantt-tooltip';
+            const endYear = d.death_year ? parseInt(d.death_year) : currentYear;
+            const status = d.death_year ? `Died ${d.death_year}` : 'Living';
+            tooltip.textContent = `${d.name}: ${d.birth_year} - ${endYear} (${status})`;
+            document.body.appendChild(tooltip);
+            
+            const rect = this.getBoundingClientRect();
+            tooltip.style.left = (rect.left + rect.width / 2 - tooltip.offsetWidth / 2) + 'px';
+            tooltip.style.top = (rect.top - tooltip.offsetHeight - 5) + 'px';
+            
+            d3.select(this).attr('opacity', 0.7);
+        })
+        .on('mouseout', function() {
+            document.querySelectorAll('.gantt-tooltip').forEach(el => el.remove());
+            d3.select(this).attr('opacity', 1);
+        });
+}
+
+function closePandasModal() {
+    document.getElementById('pandasModal').classList.remove('active');
+}
+
+document.getElementById('closeModal').addEventListener('click', closePandasModal);
+document.getElementById('pandasModal').addEventListener('click', (e) => {
+    if (e.target.id === 'pandasModal') closePandasModal();
+});
+
+mapboxgl.accessToken = 'pk.eyJ1IjoibGlseWxpbmQiLCJhIjoiY2x1Z2Nwemd4MmJhaTJqcHEza2FzeG5scyJ9.jsQVkSy13yjFb00UtjAdzg';
+const map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/streets-v12',
+    center: [0, 0],
+    zoom: 2
+});
+
+map.on('load', () => {
+    const zooData = {
+"type": "FeatureCollection",
+"name": "Zoos",
+"features": [
+{ "type": "Feature", "properties": { "Name": "Berlin Zoo", "description": "The Berlin Zoo hosts the oldest panda.", "image_url": "https://www.zoo-berlin.de/fileadmin/user_upload/Header_Pandagarden.jpg", "source_text": "Zoo Berlin", "source_url": "https://www.zoo-berlin.de/en/animals/panda-garden", "filter": "current" }, "geometry": { "type": "Point", "coordinates": [ 13.3463965, 52.5132622, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "ZooParc de Beauval", "description": "This is another zoo.", "image_url": "https://cdn-images.zoobeauval.com/YtejtULyRFVxqrrTGTEYM22WZ7Q=/2400x1425/https%3A%2F%2Fs3.eu-west-3.amazonaws.com%2Fimages.zoobeauval.com%2F2020%2F06%2Fparrainage-1-5ee0ed7869fbf.jpg", "source_text": "ZooParc de Beauval", "source_url": "https://www.zoobeauval.com/en/zooparc/animals/giant-panda", "filter": "current" }, "geometry": { "type": "Point", "coordinates": [ 1.35309, 47.2476534, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "Pairi Diaza", "description": null, "image_url": null, "source_text": null, "source_url": null, "filter": null }, "geometry": { "type": "Point", "coordinates": [ 3.8873876, 50.5850028, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "Edinburgh Zoo", "description": null, "image_url": null, "source_text": null, "source_url": null, "filter": null }, "geometry": { "type": "Point", "coordinates": [ -3.2685447, 55.9423744, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "Tiergarten Schönbrunn", "description": null, "image_url": null, "source_text": null, "source_url": null, "filter": null }, "geometry": { "type": "Point", "coordinates": [ 16.3028435, 48.1820666, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "Ähtäri Zoo", "description": null, "image_url": null, "source_text": null, "source_url": null, "filter": null }, "geometry": { "type": "Point", "coordinates": [ 24.1850654, 62.5363251, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "Zoo Aquarium", "description": null, "image_url": null, "source_text": null, "source_url": null, "filter": null }, "geometry": { "type": "Point", "coordinates": [ -3.7608442, 40.409189, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "Copenhagen Zoo", "description": null, "image_url": null, "source_text": null, "source_url": null, "filter": null }, "geometry": { "type": "Point", "coordinates": [ 12.5234459, 55.6716899, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "Ouwehands Dierenpark", "description": null, "image_url": null, "source_text": null, "source_url": null, "filter": null }, "geometry": { "type": "Point", "coordinates": [ 5.5909509, 51.9556998, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "Moscow Zoo", "description": null, "image_url": null, "source_text": null, "source_url": null, "filter": null }, "geometry": { "type": "Point", "coordinates": [ 37.5766016, 55.7631648, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "Adelaide Zoo", "description": null, "image_url": null, "source_text": null, "source_url": null, "filter": null }, "geometry": { "type": "Point", "coordinates": [ 138.606471, -34.9147027, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "Everland", "description": null, "image_url": null, "source_text": null, "source_url": null, "filter": null }, "geometry": { "type": "Point", "coordinates": [ 127.2028654, 37.2929093, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "Ueno Zoo", "description": null, "image_url": null, "source_text": null, "source_url": null, "filter": null }, "geometry": { "type": "Point", "coordinates": [ 139.7729492, 35.7159369, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "Zoo Negara", "description": null, "image_url": null, "source_text": null, "source_url": null, "filter": null }, "geometry": { "type": "Point", "coordinates": [ 101.758779, 3.2101774, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "Zoo Atlanta", "description": null, "image_url": null, "source_text": null, "source_url": null, "filter": null }, "geometry": { "type": "Point", "coordinates": [ -84.3716518, 33.7337275, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "Memphis Zoo", "description": null, "image_url": null, "source_text": null, "source_url": null, "filter": null }, "geometry": { "type": "Point", "coordinates": [ -89.9943446, 35.149959, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "Smithsonian Zoo", "description": null, "image_url": null, "source_text": null, "source_url": null, "filter": null }, "geometry": { "type": "Point", "coordinates": [ -77.0495628, 38.9295356, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "San Diego Zoo", "description": null, "image_url": null, "source_text": null, "source_url": null, "filter": null }, "geometry": { "type": "Point", "coordinates": [ -117.150968, 32.7359996, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "Zoológico de Chapultepec", "description": null, "image_url": null, "source_text": null, "source_url": null, "filter": null }, "geometry": { "type": "Point", "coordinates": [ -99.1894399, 19.4231966, 0.0 ] } }
+]
+};
+    map.addSource('zoos', {
+        type: 'geojson',
+        data: zooData
+    });
+    map.addLayer({
+        id: 'zoos-layer',
+        type: 'circle',
+        source: 'zoos',
+        paint: {
+            'circle-radius': 8,
+            'circle-color': '#B42222'
+        }
+    });
+
+    // Add click handler for D3 pandas modal
+    map.on('click', 'zoos-layer', (e) => {
+        const properties = e.features[0].properties;
+        openPandasModal(properties.Name);
+    });
+
+    // Change cursor on hover
+    map.on('mouseenter', 'zoos-layer', () => {
+        map.getCanvas().style.cursor = 'pointer';
+    });
+    map.on('mouseleave', 'zoos-layer', () => {
+        map.getCanvas().style.cursor = '';
+    });
+});
+</script>
+</body>
+</html>
